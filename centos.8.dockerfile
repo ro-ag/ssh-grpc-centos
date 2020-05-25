@@ -4,10 +4,11 @@ ARG       MAKE_J=6
 ARG   GO_VERSION=1.14.3
 ARG GRPC_VERSION=1.28.1
 
+ENV PACKAGE_SET="gcc-toolset-9 cmake autoconf automake bzip2 wget git nano zlib lzo-devel libfastjson"
 RUN yum update -y
-RUN yum install -y gcc-toolset-9 
-RUN yum install -y cmake autoconf automake
-RUN yum install -y bzip2 wget git cpan nano vim vi python3 zlib lzo-devel libfastjson
+RUN yum install -y --setopt=tsflags=nodocs ${PACKAGE_SET}
+RUN rpm -V $PACKAGE_SET 
+RUN yum install -y --setopt=tsflags=nodocs cpan python3 vim vi 
 RUN yum clean all
 
 RUN cd /tmp && \
@@ -45,9 +46,7 @@ RUN rm -rf grpc
 
 # GRPC python
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install grpcio
-RUN python3 -m pip install grpcio-tools
-RUN python3 -m pip install protobuf
+RUN python3 -m pip install grpcio grpcio-tools protobuf
 
 # Enable GCC-9 by default
 RUN yum install -y openssh-server passwd sudo; yum clean all
@@ -65,24 +64,24 @@ RUN useradd docker \
         && usermod -aG wheel docker \
         && true
 
-# Persistent gcc-toolset-9
-
-#RUN ls /etc/profile.d
-COPY entrypoint.sh  /etc/profile.d/enable_gcc.sh
-RUN chmod +x /etc/profile.d/enable_gcc.sh ; rm /run/nologin 
-#RUN ls  /etc/profile.d
-
-# External Commands
-COPY entrypoint.sh /usr/bin/entrypoint.sh
-RUN chmod +x /usr/bin/entrypoint.sh
-
+# Default Command
+ 
 COPY run.sh /usr/bin/run.sh
 RUN chmod +x /usr/bin/run.sh
-
+# Set root password
 COPY set_root_pw.sh /usr/bin/set_root_pw.sh
 RUN chmod +x /usr/bin/set_root_pw.sh
 
+
 EXPOSE 22
 
-ENTRYPOINT [ "/usr/bin/entrypoint.sh" ]
+# Add Environment Variables and SCL for gcc
+RUN echo "export GRPC_DIR=${GRPC_DIR}" >> /etc/profile.d/go_path.sh
+RUN echo "export GOROOT=${GOROOT}"  >> /etc/profile.d/go_path.sh
+RUN echo "export GOPATH=${GOPATH}"  >> /etc/profile.d/go_path.sh
+RUN echo "export GOBIN=${GOBIN}"    >> /etc/profile.d/go_path.sh
+RUN echo "export PATH=${GOPATH}/bin:${GOROOT}/bin:$PATH" >> /etc/profile.d/go_path.sh
+RUN echo 'source /opt/rh/gcc-toolset-9/enable' >> /etc/profile.d/go_path.sh
+RUN chmod +x /etc/profile.d/go_path.sh ; rm /run/nologin 
+
 CMD ["/usr/bin/run.sh"]

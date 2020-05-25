@@ -2,7 +2,7 @@
 
 if [ -z "${SSH_KEY}" ]; then
 	echo "=> Please pass your public key in the SSH_KEY environment variable"
-	exit 0
+	exit 1
 fi
 
 for MYHOME in /root /home/docker; do
