@@ -5,12 +5,12 @@ ARG   GO_VERSION=1.14.3
 ARG GRPC_VERSION=1.28.1
 
 RUN yum update -y
-RUN yum install -y gcc-toolset-9 cmake autoconf automake
+RUN yum install -y gcc-toolset-9 
+RUN yum install -y cmake autoconf automake
 RUN yum install -y bzip2 wget git cpan nano vim vi python3 zlib lzo-devel libfastjson
 RUN yum clean all
 
-RUN \
-    cd /tmp && \
+RUN cd /tmp && \
     wget -nv https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
     tar -xvf go${GO_VERSION}.linux-amd64.tar.gz && \
     mv go /usr/local
