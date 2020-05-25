@@ -11,6 +11,8 @@ RUN rpm -V $PACKAGE_SET
 RUN yum install -y --setopt=tsflags=nodocs cpan python3 vim vi 
 RUN yum clean all
 
+# Install Go
+
 RUN cd /tmp && \
     wget -nv https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
     tar -xvf go${GO_VERSION}.linux-amd64.tar.gz && \
@@ -21,7 +23,7 @@ ENV GOPATH=${HOME}/go
 ENV GOBIN=${GOPATH}/bin
 ENV PATH=${GOPATH}/bin:${GOROOT}/bin:{$PATH}
 RUN go version
-RUN go get -u -v \
+RUN go get -u \
     google.golang.org/grpc \
     github.com/golang/protobuf/protoc-gen-go \
     github.com/go-delve/delve/cmd/dlv \
@@ -44,11 +46,11 @@ RUN cd grpc \
 # Clean
 RUN rm -rf grpc
 
-# GRPC python
+# GRPC python and protobuf
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install grpcio grpcio-tools protobuf
 
-# Enable GCC-9 by default
+# SSH configuration
 RUN yum install -y openssh-server passwd sudo; yum clean all
 RUN /usr/bin/ssh-keygen -A
 RUN mkdir -p /var/run/sshd \
@@ -57,6 +59,7 @@ RUN mkdir -p /var/run/sshd \
   && touch /root/.Xauthority \
   && true
 
+# Addd docker user
 RUN useradd docker \
         && passwd -d docker \
         && mkdir -p /home/docker \
@@ -64,10 +67,10 @@ RUN useradd docker \
         && usermod -aG wheel docker \
         && true
 
-# Default Command
- 
+# Default Command 
 COPY run.sh /usr/bin/run.sh
 RUN chmod +x /usr/bin/run.sh
+
 # Set root password
 COPY set_root_pw.sh /usr/bin/set_root_pw.sh
 RUN chmod +x /usr/bin/set_root_pw.sh
