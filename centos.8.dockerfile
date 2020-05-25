@@ -47,6 +47,7 @@ RUN cd grpc \
 RUN rm -rf grpc
 
 # GRPC python and protobuf
+
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install grpcio grpcio-tools protobuf
 
