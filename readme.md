@@ -1,0 +1,1 @@
+$SSH_KEY = Get-Content $env:USERPROFILE\.ssh\id_rsa.pub
