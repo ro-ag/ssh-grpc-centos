@@ -4,6 +4,19 @@ ARG       MAKE_J=6
 ARG   GO_VERSION=1.14.3
 ARG GRPC_VERSION=1.28.1
 
+# GRPC for GO tracing
+ARG LOG_VERBOSITY_LEVEL=99
+ARG LOG_SEVERITY_LEVEL=info
+ENV GRPC_GO_LOG_VERBOSITY_LEVEL=${LOG_VERBOSITY_LEVEL}
+ENV GRPC_GO_LOG_SEVERITY_LEVEL=${LOG_SEVERITY_LEVEL}
+
+# GRPC C
+ARG C_GRPC_VERBOSITY=info
+ARG C_GRPC_TRACE=api
+ENV GRPC_VERBOSITY=${C_GRPC_VERBOSITY}
+ENV GRPC_TRACE=${C_GRPC_TRACE}
+
+
 ENV PACKAGE_SET="gcc-toolset-9 cmake autoconf automake bzip2 wget git nano zlib lzo-devel libfastjson"
 RUN yum update -y
 RUN yum install -y --setopt=tsflags=nodocs ${PACKAGE_SET}
@@ -45,6 +58,14 @@ RUN cd grpc \
     && popd
 # Clean
 RUN rm -rf grpc
+
+# Go Dev Tools for VS code
+RUN go get -u \
+    github.com/mdempsky/gocode \
+    github.com/uudashr/gopkgs/v2/cmd/gopkgs \
+    github.com/sqs/goreturns \
+    github.com/pborman/getopt \
+    github.com/rogpeppe/godef
 
 # GRPC python and protobuf
 
