@@ -44,6 +44,14 @@ RUN go get -u \
     go.mongodb.org/mongo-driver/mongo \
     github.com/gorilla/mux
 
+# Go Dev Tools for VS code
+RUN go get -u \
+    github.com/mdempsky/gocode \
+    github.com/uudashr/gopkgs/v2/cmd/gopkgs \
+    github.com/sqs/goreturns \
+    github.com/pborman/getopt \
+    github.com/rogpeppe/godef
+
 # GRPC C++
 ENV GRPC_DIR=/usr/local/grpc
 ENV PATH=${GRPC_DIR}:${GRPC_DIR}/bin:${PATH}
@@ -58,14 +66,6 @@ RUN cd grpc \
     && popd
 # Clean
 RUN rm -rf grpc
-
-# Go Dev Tools for VS code
-RUN go get -u \
-    github.com/mdempsky/gocode \
-    github.com/uudashr/gopkgs/v2/cmd/gopkgs \
-    github.com/sqs/goreturns \
-    github.com/pborman/getopt \
-    github.com/rogpeppe/godef
 
 # GRPC python and protobuf
 
