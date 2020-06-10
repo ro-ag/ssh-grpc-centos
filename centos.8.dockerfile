@@ -65,7 +65,7 @@ RUN cd grpc \
     && scl enable gcc-toolset-9 'make install'  \
     && popd
 # Clean
-RUN rm -rf grpc
+# UN rm -rf grpc/cmake/build
 
 # GRPC python and protobuf
 
