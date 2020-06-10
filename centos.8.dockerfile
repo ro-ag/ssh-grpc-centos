@@ -4,30 +4,29 @@ ARG       MAKE_J=6
 ARG   GO_VERSION=1.14.3
 ARG GRPC_VERSION=1.28.1
 
-# GRPC for GO tracing
-ARG LOG_VERBOSITY_LEVEL=99
-ARG LOG_SEVERITY_LEVEL=info
-ENV GRPC_GO_LOG_VERBOSITY_LEVEL=${LOG_VERBOSITY_LEVEL}
-ENV GRPC_GO_LOG_SEVERITY_LEVEL=${LOG_SEVERITY_LEVEL}
-
-# GRPC C
-ARG C_GRPC_VERBOSITY=info
-ARG C_GRPC_TRACE=api
-ENV GRPC_VERBOSITY=${C_GRPC_VERBOSITY}
-ENV GRPC_TRACE=${C_GRPC_TRACE}
-
-
-ENV PACKAGE_SET="gcc-toolset-9 cmake autoconf automake bzip2 wget git nano zlib lzo-devel libfastjson"
+ENV PACKAGE_SET="gcc-toolset-9 autoconf automake bzip2 wget git nano zlib lzo-devel libfastjson"
 RUN yum update -y
 RUN yum install -y --setopt=tsflags=nodocs ${PACKAGE_SET}
 RUN rpm -V $PACKAGE_SET 
 RUN yum install -y --setopt=tsflags=nodocs cpan python3 vim vi 
 RUN yum clean all
 
+# Install CMAKE - Higher vesrion is not available with YUM 
+
+WORKDIR /tmp
+
+ARG CMAKE_DIR=/usr
+RUN source /opt/rh/gcc-toolset-9/enable \
+    && mkdir -p ${CMAKE_DIR} \
+    && wget -q -O cmake-linux.sh https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.sh \
+    && sh cmake-linux.sh --skip-license --prefix=${CMAKE_DIR} \
+    && rm cmake-linux.sh
+
+RUN cmake --version
+
 # Install Go
 
-RUN cd /tmp && \
-    wget -nv https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
+RUN wget -nv https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
     tar -xvf go${GO_VERSION}.linux-amd64.tar.gz && \
     mv go /usr/local
 
@@ -53,24 +52,26 @@ RUN go get -u \
     github.com/rogpeppe/godef
 
 # GRPC C++
+
+RUN gcc --version
 ENV GRPC_DIR=/usr/local/grpc
 ENV PATH=${GRPC_DIR}:${GRPC_DIR}/bin:${PATH}
 RUN mkdir -p ${GRPC_DIR};
 RUN git clone --recurse-submodules -b v${GRPC_VERSION} https://github.com/grpc/grpc
-RUN cd grpc \
+RUN source /opt/rh/gcc-toolset-9/enable \
+    && gcc --version \
+    && cd grpc \
     && mkdir -p cmake/build \
     && pushd cmake/build \
-    && scl enable gcc-toolset-9 'cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=${GRPC_DIR} ../..' \
-    && scl enable gcc-toolset-9 'make -j ${MAKE_J}'\
-    && scl enable gcc-toolset-9 'make install'  \
+    && cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=${GRPC_DIR} ../.. \
+    && make -j ${MAKE_J} \
+    && make install  \
     && popd
-# Clean
-# UN rm -rf grpc/cmake/build
 
 # GRPC python and protobuf
 
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install grpcio grpcio-tools protobuf
+RUN python3 -m pip install grpcio grpcio-tools protobuf pandas
 
 # SSH configuration
 RUN yum install -y openssh-server passwd sudo; yum clean all
@@ -108,5 +109,9 @@ RUN echo "export GOBIN=${GOBIN}"    >> /etc/profile.d/go_path.sh
 RUN echo "export PATH=${GOPATH}/bin:${GOROOT}/bin:$PATH" >> /etc/profile.d/go_path.sh
 RUN echo 'source /opt/rh/gcc-toolset-9/enable' >> /etc/profile.d/go_path.sh
 RUN chmod +x /etc/profile.d/go_path.sh ; rm /run/nologin 
+
+# Cleanning UP
+
+RUN rm -rf /tmp/*
 
 CMD ["/usr/bin/run.sh"]
