@@ -1,7 +1,7 @@
 FROM centos:8
 
 ARG       MAKE_J=6
-ARG   GO_VERSION=1.14.3
+ARG   GO_VERSION=1.16.3
 ARG GRPC_VERSION=1.28.1
 
 ENV PACKAGE_SET="gcc-toolset-9 autoconf automake bzip2 wget git nano zlib lzo-devel libfastjson"
